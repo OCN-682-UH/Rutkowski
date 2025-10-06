@@ -1,0 +1,35 @@
+---
+title: "My first quarto"
+author: "Emily Rutkowski"
+date: today 
+format: 
+  html: 
+    toc: true 
+    theme: cerulean
+---
+
+## Introduction
+This is my first *Quarto* document and I am going to plot some penguin data! 
+
+```{r}
+#| message: false 
+library(tidyverse)
+library(here)
+library(palmerpenguins)
+
+
+```
+## Look at the data 
+```{r}
+glimpse(penguins)
+```
+## Make a plot
+This is look at the relationship between **bill length** and **bill depth**.
+```{r}
+#| warning: false 
+penguins %>% # penguin dataset 
+  ggplot(aes(x = bill_length_mm, y = bill_depth_mm, color = species))+
+  geom_point()
+
+```
+

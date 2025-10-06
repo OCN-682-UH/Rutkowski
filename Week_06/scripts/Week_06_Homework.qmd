@@ -1,0 +1,195 @@
+---
+title: "Week 06 Homework"
+subtitle: Creating my most B-E-A-utiful Quarto document! 
+author: "Emily C Rutkowski"
+date: today
+format: 
+  html:
+    toc: true
+    toc-title: "Are you lost? Look here!" 
+    theme: darkly
+    smooth-scroll: true 
+    respect-user-color-scheme: true 
+    link-external-newwindow: true
+    linkcolor: pink 
+    page-layout: article
+    title-block-banner: true
+    code-copy: true 
+    lightbox: true 
+    code-fold: true
+    code-summary: "Hey kid, you wanna see some code?"
+knitr: 
+  opts_chunk: 
+    fig.path: "../output/" # added ../ because qmd is in scripts folder 
+---
+
+## **Introduction to Quarto Document** 
+
+This Quarto document takes a look at the benthic community patterns in Mo'orea Reefs by comparing coral, clgal, and crustose coralline algae (CCA) cover across multiple sites.
+
+Monitoring the **relative cover of coral, CCA, and algae** across sites in **Mo'orea, French Polynesia** can help reveal patterns of reef resilience or degradation.
+
+In this analysis, we summarize site-level mean percent cover for each of these groups and visualize how benthic composition varies across sites.
+
+::: callout-note
+[Error loading \<Element\>. Click to fix.](https://www.youtube.com/watch?v=LP0HYIkHs2Q)
+:::
+---
+
+## Let's load in our libraries! 
+```{r}
+#| message: false
+#| warning: false
+
+library(tidyverse)
+library(ggplot2)
+library(plotly)
+library(kableExtra)
+library(htmltools)
+library(here)
+library(PNWColors)
+```
+
+## Load in Data
+```{r}
+#| message: false
+#| warning: false
+
+SiteChr<- read_csv(here("Week_06", "data", "site.characteristics.data.csv")) # read in data from appropriate folder 
+view(SiteChr) # Look at the data 
+```
+
+## Data Wrangling 
+
+Let's edit the data to look at what were interested in: 
+
+- <u>Percent (%) Coverage</u>
+  - **_Coral_**
+  - **_CCA_**
+  - **_Algae_** 
+
+```{r}
+#| warning: false
+#| message: false
+SiteChr_clean<- SiteChr %>%
+  drop_na() %>% # get rid of any NAs
+  filter(parameter.measured %in% c("algal.cover", "CCA.cover", "coral.cover")) %>% # filter by what were interested in 
+  group_by(name, parameter.measured) %>% # group by these colummns and avoid NAs when pivoting 
+  summarise(mean_value = mean(values, na.rm = TRUE)) %>% # Calculate the mean values for each parameter 
+  pivot_wider(names_from = parameter.measured,
+              values_from = mean_value) # pivot wider to have each column be a parameter 
+  
+```
+
+## Table
+Lets table the data shall we!
+```{r}
+#| label: tbl-Site_Characteristics 
+#| tbl-cap: "Measured Parameters per Site"
+#| tbl-cap-location: bottom
+#| tbl-colwidths: auto 
+SiteChr_clean %>%
+  kbl(col.names = c("Site", "CCA (%)", "Algal Cover (%)", "Coral Cover (%)"),
+      caption = "Mean Benthic Percent Cover By Site") %>% # make it a kable table and change column names 
+  kable_material_dark() %>% # theme 
+  row_spec(3, bold = TRUE, color = "white", background = "blue") %>% # edit specific rows
+  kable_styling(full_width = FALSE,
+                bootstrap_options = "condensed") 
+    # change width of table
+                  
+```
+@tbl-Site_Characteristics shows the average cover percentages for each site. The site highlighted in <span style="color: blue;"><strong>blue</strong></span> has the highest percentage of both algal cover *and* coral cover. 
+
+<div style="text-align:center;">
+  <img src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExZjk2aXRiMmR1OWdiYzFkdXQ5NWczZXRwZzhoazhmOWloOXN0cjh0eCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/26ufdipQqU2lhNA4g/giphy.gif" 
+       alt="Centered GIF" 
+       width="300">
+</div>
+
+## Plot Data Summary
+
+Let's visualize this for those of us who hate tables! 
+```{r}
+#| warning: false
+#| message: false
+#| fig-align: "center"
+#| label: fig-Mean_Cover 
+#| fig-cap: Profile Line Plot showing each site’s “shape” across the three variables.
+
+SiteChr_long<- SiteChr_clean %>%
+  pivot_longer(cols = CCA.cover:coral.cover,
+               names_to = "parameters",
+               values_to = "mean_value") 
+  SiteChr_long %>%
+  ggplot(aes(x = parameters, y = mean_value, group = name)) +
+  geom_line(alpha = 0.4) +
+  geom_point() +
+  facet_wrap(~ name, scales = "free_y")+
+           
+             
+  labs( title = "Mean Coral Cover, CCA Cover, and\n Algal Cover by Reef Site", # add titles 
+        subtitle = "Site-level contrasts in coral, CCA, and algal cover\n as indicators of reef health.",
+        x = "Parameters", # Making the axes labels presentation ready 
+        y = "Percentage") +
+    scale_x_discrete(labels = c(
+    "CCA.cover" = "CCA Cover",
+    "coral.cover"   = "Coral Cover",
+    "algal.cover" = "Algal Cover"))+
+  
+ 
+  theme_linedraw() + # changing the theme
+  theme(plot.title = element_text(hjust = 0.5, size = 18, face = "bold"),# changing the font size and centering the title and axes
+        axis.title = element_text(size = 15),
+        axis.text.x = element_text(angle=45,hjust=1), # angling the x axis labels so theyre legible 
+        plot.subtitle = element_text(hjust = 0.5, size  = 10))
+
+```
+
+@fig-Mean_Cover shows the mean percent cover of coral, CCA, and algae across all surveyed sites in Mo‘orea. Sites with higher coral and CCA cover generally indicate healthier reef conditions, whereas sites with elevated algal cover may reflect degraded conditions or competitive overgrowth.
+
+<span style="color: orange;"><strong>Did you know?</strong></span> 
+
+Coral recruits often prefer **CCA** <span title="Crustose Coralline Algae">(?)</span> surfaces.
+
+<div style="text-align:center;">
+  <img src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExd3k4cnhsN2M2azd2eXEzMDdxZmFkN3hpejJiMGRwajAxcWFkZWQ5eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/yJFeycRK2DB4c/giphy.gif" 
+       alt="Centered GIF" 
+       width="300">
+</div>
+
+## End
+```{r}
+  sometext <- strsplit(paste0(
+  "Congratulations!! You've made it to the end of my Quarto page! ",
+  "I hope you enjoyed it and found it useful! ",
+  "Seeing as it took me a long time",
+  " and I really put some time into it to really be interactive",
+  "maybe just maybe consider",
+  " giving me a 100% please hehe "
+), " ")[[1]]
+
+text_formatted <- paste(
+  text_spec(
+    sometext,
+    color     = spec_color(seq_along(sometext), end = 0.9),
+    font_size = spec_font_size(seq_along(sometext), begin = 50, end = 10)
+  ),
+  collapse = " "
+)
+HTML(text_formatted)
+```
+
+## Bonus Content! 
+
+Was your computer struggling to load this page?
+
+Click *the link* to **[Download more RAM!!](#)** 😏
+
+<audio id="rickAudio" src="https://www.myinstants.com/media/sounds/rick-rolled-meme-aetrim1602054550919.mp3"></audio>
+
+<script>
+document.querySelector('a[href="#"]').addEventListener('click', function(e) {
+  e.preventDefault();                 // don’t follow the link
+  document.getElementById('rickAudio').play();   // play the sound
+});
+</script>
