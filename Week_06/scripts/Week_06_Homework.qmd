@@ -3,6 +3,7 @@ title: "Week 06 Homework"
 subtitle: Creating my most B-E-A-utiful Quarto document! 
 author: "Emily C Rutkowski"
 date: today
+title-block-banner: "images/fgbcrcptech2012.jpg"
 format: 
   html:
     toc: true
@@ -13,14 +14,13 @@ format:
     link-external-newwindow: true
     linkcolor: pink 
     page-layout: article
-    title-block-banner: true
     code-copy: true 
     lightbox: true 
     code-fold: true
     code-summary: "Hey kid, you wanna see some code?"
-knitr: 
-  opts_chunk: 
-    fig.path: "../output/" # added ../ because qmd is in scripts folder 
+#knitr: 
+#  opts_chunk: 
+#    fig.path: "../output/" # added ../ because qmd is in scripts folder 
 ---
 
 ## **Introduction to Quarto Document** 
@@ -43,7 +43,6 @@ In this analysis, we summarize site-level mean percent cover for each of these g
 
 library(tidyverse)
 library(ggplot2)
-library(plotly)
 library(kableExtra)
 library(htmltools)
 library(here)
@@ -94,8 +93,7 @@ SiteChr_clean %>%
   kable_material_dark() %>% # theme 
   row_spec(3, bold = TRUE, color = "white", background = "blue") %>% # edit specific rows
   kable_styling(full_width = FALSE,
-                bootstrap_options = "condensed") 
-    # change width of table
+                bootstrap_options = "condensed") # change width of table
                   
 ```
 @tbl-Site_Characteristics shows the average cover percentages for each site. The site highlighted in <span style="color: blue;"><strong>blue</strong></span> has the highest percentage of both algal cover *and* coral cover. 
@@ -117,22 +115,22 @@ Let's visualize this for those of us who hate tables!
 #| fig-cap: Profile Line Plot showing each site’s “shape” across the three variables.
 
 SiteChr_long<- SiteChr_clean %>%
-  pivot_longer(cols = CCA.cover:coral.cover,
+  pivot_longer(cols = CCA.cover:coral.cover, # pivot longer to plot variables all at once
                names_to = "parameters",
                values_to = "mean_value") 
-  SiteChr_long %>%
-  ggplot(aes(x = parameters, y = mean_value, group = name)) +
-  geom_line(alpha = 0.4) +
+
+  Site_plot<-SiteChr_long %>%
+  ggplot(aes(x = parameters, y = mean_value, group = name)) + #plotting the mean value of each parameter by site 
+  geom_line(alpha = 0.4) + # change transparency 
   geom_point() +
-  facet_wrap(~ name, scales = "free_y")+
+  facet_wrap(~ name, scales = "free_y")+ # give each its own scale 
            
              
   labs( title = "Mean Coral Cover, CCA Cover, and\n Algal Cover by Reef Site", # add titles 
         subtitle = "Site-level contrasts in coral, CCA, and algal cover\n as indicators of reef health.",
         x = "Parameters", # Making the axes labels presentation ready 
         y = "Percentage") +
-    scale_x_discrete(labels = c(
-    "CCA.cover" = "CCA Cover",
+    scale_x_discrete(labels = c("CCA.cover" = "CCA Cover", # making parameter labels presentation ready 
     "coral.cover"   = "Coral Cover",
     "algal.cover" = "Algal Cover"))+
   
@@ -142,6 +140,8 @@ SiteChr_long<- SiteChr_clean %>%
         axis.title = element_text(size = 15),
         axis.text.x = element_text(angle=45,hjust=1), # angling the x axis labels so theyre legible 
         plot.subtitle = element_text(hjust = 0.5, size  = 10))
+  
+Site_plot
 
 ```
 
@@ -159,23 +159,20 @@ Coral recruits often prefer **CCA** <span title="Crustose Coralline Algae">(?)</
 
 ## End
 ```{r}
-  sometext <- strsplit(paste0(
+# Create a character vector by splitting a long string into words
+  sometext <- strsplit(paste0( # split string into pieces, paste0() joins strings with no space
   "Congratulations!! You've made it to the end of my Quarto page! ",
   "I hope you enjoyed it and found it useful! ",
   "Seeing as it took me a long time",
   " and I really put some time into it to really be interactive",
   "maybe just maybe consider",
-  " giving me a 100% please hehe "
-), " ")[[1]]
-
+  " giving me a 100% please hehe "), " ")[[1]] # Split at each space, [[1]] extracts the irst element , returns a list 
+# Apply styling to each word and reassemble them into a single string
 text_formatted <- paste(
-  text_spec(
-    sometext,
-    color     = spec_color(seq_along(sometext), end = 0.9),
-    font_size = spec_font_size(seq_along(sometext), begin = 50, end = 10)
-  ),
-  collapse = " "
-)
+  text_spec(sometext, # format text, vector or words 
+    color     = spec_color(seq_along(sometext), end = 0.9), # assign color to words, sequence per word, color gradient stops at 90% 
+    font_size = spec_font_size(seq_along(sometext), begin = 50, end = 10)), # assign font size, match length of words
+  collapse = " ") # re-combine all the styled words into one long string separated by spaces
 HTML(text_formatted)
 ```
 

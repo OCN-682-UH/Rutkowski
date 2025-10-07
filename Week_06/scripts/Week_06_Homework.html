@@ -73,6 +73,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="Week_06_Homework_files/libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
 <link href="Week_06_Homework_files/libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet">
 <style>html{ scroll-behavior: smooth; }</style>
+<style>
+
+      .quarto-title-block .quarto-title-banner {
+        background-image: url(images/fgbcrcptech2012.jpg);
+background-size: cover;
+      }
+</style>
 <script src="Week_06_Homework_files/libs/kePrint-0.0.1/kePrint.js"></script>
 <link href="Week_06_Homework_files/libs/lightable-0.0.1/lightable.css" rel="stylesheet">
 
@@ -160,11 +167,10 @@ Note
 <summary>Hey kid, you wanna see some code?</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(plotly)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(kableExtra)</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(htmltools)</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here)</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(PNWColors)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(kableExtra)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(htmltools)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(PNWColors)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
@@ -214,8 +220,7 @@ Note
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable_material_dark</span>() <span class="sc">%&gt;%</span> <span class="co"># theme </span></span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">row_spec</span>(<span class="dv">3</span>, <span class="at">bold =</span> <span class="cn">TRUE</span>, <span class="at">color =</span> <span class="st">"white"</span>, <span class="at">background =</span> <span class="st">"blue"</span>) <span class="sc">%&gt;%</span> <span class="co"># edit specific rows</span></span>
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">full_width =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>                <span class="at">bootstrap_options =</span> <span class="st">"condensed"</span>) </span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="co"># change width of table</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>                <span class="at">bootstrap_options =</span> <span class="st">"condensed"</span>) <span class="co"># change width of table</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div id="tbl-Site_Characteristics" class="cell quarto-float quarto-figure quarto-figure-center anchored" data-tbl-colwidths="auto" data-tbl-cap-location="bottom">
 <figure class="quarto-float quarto-float-tbl figure">
@@ -292,22 +297,22 @@ Table&nbsp;1: Measured Parameters per Site
 <details class="code-fold">
 <summary>Hey kid, you wanna see some code?</summary>
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>SiteChr_long<span class="ot">&lt;-</span> SiteChr_clean <span class="sc">%&gt;%</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> CCA.cover<span class="sc">:</span>coral.cover,</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> CCA.cover<span class="sc">:</span>coral.cover, <span class="co"># pivot longer to plot variables all at once</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>               <span class="at">names_to =</span> <span class="st">"parameters"</span>,</span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>               <span class="at">values_to =</span> <span class="st">"mean_value"</span>) </span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  SiteChr_long <span class="sc">%&gt;%</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> parameters, <span class="at">y =</span> mean_value, <span class="at">group =</span> name)) <span class="sc">+</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">alpha =</span> <span class="fl">0.4</span>) <span class="sc">+</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> name, <span class="at">scales =</span> <span class="st">"free_y"</span>)<span class="sc">+</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>           </span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>             </span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>( <span class="at">title =</span> <span class="st">"Mean Coral Cover, CCA Cover, and</span><span class="sc">\n</span><span class="st"> Algal Cover by Reef Site"</span>, <span class="co"># add titles </span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>        <span class="at">subtitle =</span> <span class="st">"Site-level contrasts in coral, CCA, and algal cover</span><span class="sc">\n</span><span class="st"> as indicators of reef health."</span>,</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="st">"Parameters"</span>, <span class="co"># Making the axes labels presentation ready </span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> <span class="st">"Percentage"</span>) <span class="sc">+</span></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_x_discrete</span>(<span class="at">labels =</span> <span class="fu">c</span>(</span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"CCA.cover"</span> <span class="ot">=</span> <span class="st">"CCA Cover"</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  Site_plot<span class="ot">&lt;-</span>SiteChr_long <span class="sc">%&gt;%</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> parameters, <span class="at">y =</span> mean_value, <span class="at">group =</span> name)) <span class="sc">+</span> <span class="co">#plotting the mean value of each parameter by site </span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">alpha =</span> <span class="fl">0.4</span>) <span class="sc">+</span> <span class="co"># change transparency </span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> name, <span class="at">scales =</span> <span class="st">"free_y"</span>)<span class="sc">+</span> <span class="co"># give each its own scale </span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>           </span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>             </span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>( <span class="at">title =</span> <span class="st">"Mean Coral Cover, CCA Cover, and</span><span class="sc">\n</span><span class="st"> Algal Cover by Reef Site"</span>, <span class="co"># add titles </span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>        <span class="at">subtitle =</span> <span class="st">"Site-level contrasts in coral, CCA, and algal cover</span><span class="sc">\n</span><span class="st"> as indicators of reef health."</span>,</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="st">"Parameters"</span>, <span class="co"># Making the axes labels presentation ready </span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> <span class="st">"Percentage"</span>) <span class="sc">+</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_x_discrete</span>(<span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"CCA.cover"</span> <span class="ot">=</span> <span class="st">"CCA Cover"</span>, <span class="co"># making parameter labels presentation ready </span></span>
 <span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"coral.cover"</span>   <span class="ot">=</span> <span class="st">"Coral Cover"</span>,</span>
 <span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">"algal.cover"</span> <span class="ot">=</span> <span class="st">"Algal Cover"</span>))<span class="sc">+</span></span>
 <span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  </span>
@@ -316,13 +321,15 @@ Table&nbsp;1: Measured Parameters per Site
 <span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">hjust =</span> <span class="fl">0.5</span>, <span class="at">size =</span> <span class="dv">18</span>, <span class="at">face =</span> <span class="st">"bold"</span>),<span class="co"># changing the font size and centering the title and axes</span></span>
 <span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.title =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">15</span>),</span>
 <span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>        <span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle=</span><span class="dv">45</span>,<span class="at">hjust=</span><span class="dv">1</span>), <span class="co"># angling the x axis labels so theyre legible </span></span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>        <span class="at">plot.subtitle =</span> <span class="fu">element_text</span>(<span class="at">hjust =</span> <span class="fl">0.5</span>, <span class="at">size  =</span> <span class="dv">10</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>        <span class="at">plot.subtitle =</span> <span class="fu">element_text</span>(<span class="at">hjust =</span> <span class="fl">0.5</span>, <span class="at">size  =</span> <span class="dv">10</span>))</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>Site_plot</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-Mean_Cover" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-Mean_Cover-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<a href="../output/fig-Mean_Cover-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Figure&nbsp;1: Profile Line Plot showing each site’s “shape” across the three variables."><img src="../output/fig-Mean_Cover-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></a>
+<a href="Week_06_Homework_files/figure-html/fig-Mean_Cover-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-1" title="Figure&nbsp;1: Profile Line Plot showing each site’s “shape” across the three variables."><img src="Week_06_Homework_files/figure-html/fig-Mean_Cover-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="672"></a>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-Mean_Cover-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;1: Profile Line Plot showing each site’s “shape” across the three variables.
@@ -343,24 +350,21 @@ Figure&nbsp;1: Profile Line Plot showing each site’s “shape” across the th
 <div class="cell">
 <details class="code-fold">
 <summary>Hey kid, you wanna see some code?</summary>
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>  sometext <span class="ot">&lt;-</span> <span class="fu">strsplit</span>(<span class="fu">paste0</span>(</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Congratulations!! You've made it to the end of my Quarto page! "</span>,</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"I hope you enjoyed it and found it useful! "</span>,</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Seeing as it took me a long time"</span>,</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">" and I really put some time into it to really be interactive"</span>,</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"maybe just maybe consider"</span>,</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">" giving me a 100% please hehe "</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>), <span class="st">" "</span>)[[<span class="dv">1</span>]]</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a character vector by splitting a long string into words</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  sometext <span class="ot">&lt;-</span> <span class="fu">strsplit</span>(<span class="fu">paste0</span>( <span class="co"># split string into pieces, paste0() joins strings with no space</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Congratulations!! You've made it to the end of my Quarto page! "</span>,</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"I hope you enjoyed it and found it useful! "</span>,</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Seeing as it took me a long time"</span>,</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">" and I really put some time into it to really be interactive"</span>,</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"maybe just maybe consider"</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">" giving me a 100% please hehe "</span>), <span class="st">" "</span>)[[<span class="dv">1</span>]] <span class="co"># Split at each space, [[1]] extracts the irst element , returns a list </span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Apply styling to each word and reassemble them into a single string</span></span>
 <span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>text_formatted <span class="ot">&lt;-</span> <span class="fu">paste</span>(</span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">text_spec</span>(</span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    sometext,</span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">color     =</span> <span class="fu">spec_color</span>(<span class="fu">seq_along</span>(sometext), <span class="at">end =</span> <span class="fl">0.9</span>),</span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">font_size =</span> <span class="fu">spec_font_size</span>(<span class="fu">seq_along</span>(sometext), <span class="at">begin =</span> <span class="dv">50</span>, <span class="at">end =</span> <span class="dv">10</span>)</span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>  ),</span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">collapse =</span> <span class="st">" "</span></span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="fu">HTML</span>(text_formatted)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">text_spec</span>(sometext, <span class="co"># format text, vector or words </span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">color     =</span> <span class="fu">spec_color</span>(<span class="fu">seq_along</span>(sometext), <span class="at">end =</span> <span class="fl">0.9</span>), <span class="co"># assign color to words, sequence per word, color gradient stops at 90% </span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">font_size =</span> <span class="fu">spec_font_size</span>(<span class="fu">seq_along</span>(sometext), <span class="at">begin =</span> <span class="dv">50</span>, <span class="at">end =</span> <span class="dv">10</span>)), <span class="co"># assign font size, match length of words</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">collapse =</span> <span class="st">" "</span>) <span class="co"># re-combine all the styled words into one long string separated by spaces</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="fu">HTML</span>(text_formatted)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <span style="     color: rgba(68, 1, 84, 255) !important;font-size: 50px;">Congratulations!!</span> <span style="     color: rgba(70, 8, 91, 255) !important;font-size: 49px;">You've</span> <span style="     color: rgba(71, 16, 99, 255) !important;font-size: 48px;">made</span> <span style="     color: rgba(72, 23, 104, 255) !important;font-size: 48px;">it</span> <span style="     color: rgba(72, 28, 110, 255) !important;font-size: 47px;">to</span> <span style="     color: rgba(72, 35, 116, 255) !important;font-size: 46px;">the</span> <span style="     color: rgba(72, 41, 121, 255) !important;font-size: 45px;">end</span> <span style="     color: rgba(71, 46, 124, 255) !important;font-size: 44px;">of</span> <span style="     color: rgba(69, 53, 129, 255) !important;font-size: 43px;">my</span> <span style="     color: rgba(68, 58, 131, 255) !important;font-size: 42px;">Quarto</span> <span style="     color: rgba(66, 64, 134, 255) !important;font-size: 42px;">page!</span> <span style="     color: rgba(64, 69, 136, 255) !important;font-size: 41px;">I</span> <span style="     color: rgba(62, 75, 138, 255) !important;font-size: 40px;">hope</span> <span style="     color: rgba(60, 80, 139, 255) !important;font-size: 39px;">you</span> <span style="     color: rgba(57, 85, 140, 255) !important;font-size: 38px;">enjoyed</span> <span style="     color: rgba(55, 91, 141, 255) !important;font-size: 38px;">it</span> <span style="     color: rgba(53, 96, 141, 255) !important;font-size: 37px;">and</span> <span style="     color: rgba(50, 100, 142, 255) !important;font-size: 36px;">found</span> <span style="     color: rgba(48, 105, 142, 255) !important;font-size: 35px;">it</span> <span style="     color: rgba(46, 110, 142, 255) !important;font-size: 34px;">useful!</span> <span style="     color: rgba(44, 113, 142, 255) !important;font-size: 33px;">Seeing</span> <span style="     color: rgba(42, 119, 142, 255) !important;font-size: 32px;">as</span> <span style="     color: rgba(41, 123, 142, 255) !important;font-size: 32px;">it</span> <span style="     color: rgba(39, 128, 142, 255) !important;font-size: 31px;">took</span> <span style="     color: rgba(37, 131, 142, 255) !important;font-size: 30px;">me</span> <span style="     color: rgba(35, 137, 142, 255) !important;font-size: 29px;">a</span> <span style="     color: rgba(34, 141, 141, 255) !important;font-size: 28px;">long</span> <span style="     color: rgba(32, 146, 140, 255) !important;font-size: 28px;">time</span> <span style="     color: rgba(31, 150, 139, 255) !important;font-size: 27px;">and</span> <span style="     color: rgba(30, 155, 138, 255) !important;font-size: 26px;">I</span> <span style="     color: rgba(31, 159, 136, 255) !important;font-size: 25px;">really</span> <span style="     color: rgba(32, 163, 134, 255) !important;font-size: 24px;">put</span> <span style="     color: rgba(34, 168, 132, 255) !important;font-size: 23px;">some</span> <span style="     color: rgba(37, 173, 130, 255) !important;font-size: 22px;">time</span> <span style="     color: rgba(44, 177, 126, 255) !important;font-size: 22px;">into</span> <span style="     color: rgba(49, 181, 123, 255) !important;font-size: 21px;">it</span> <span style="     color: rgba(56, 185, 119, 255) !important;font-size: 20px;">to</span> <span style="     color: rgba(64, 189, 114, 255) !important;font-size: 19px;">really</span> <span style="     color: rgba(74, 193, 109, 255) !important;font-size: 18px;">be</span> <span style="     color: rgba(83, 197, 105, 255) !important;font-size: 18px;">interactivemaybe</span> <span style="     color: rgba(93, 201, 98, 255) !important;font-size: 17px;">just</span> <span style="     color: rgba(103, 204, 92, 255) !important;font-size: 16px;">maybe</span> <span style="     color: rgba(114, 208, 86, 255) !important;font-size: 15px;">consider</span> <span style="     color: rgba(125, 210, 80, 255) !important;font-size: 14px;">giving</span> <span style="     color: rgba(138, 214, 71, 255) !important;font-size: 13px;">me</span> <span style="     color: rgba(149, 216, 64, 255) !important;font-size: 12px;">a</span> <span style="     color: rgba(161, 218, 56, 255) !important;font-size: 12px;">100%</span> <span style="     color: rgba(176, 221, 47, 255) !important;font-size: 11px;">please</span> <span style="     color: rgba(187, 223, 39, 255) !important;font-size: 10px;">hehe</span>
