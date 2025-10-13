@@ -1,0 +1,182 @@
+---
+title: "Week_07_Homework"
+author: "Emily C Rutkowski"
+title-block-banner: true
+link-external-icon: true
+format: 
+  html:
+    toc: true
+    toc-title: "Explore" 
+    theme: superhero
+    smooth-scroll: true 
+    respect-user-color-scheme: true 
+    link-external-newwindow: true
+    linkcolor: orange 
+    page-layout: article
+    code-copy: true 
+    lightbox: true 
+knitr: 
+  opts_chunk: 
+    fig.path: "../output/" # added ../ because qmd is in scripts folder 
+---
+## Introduction 
+
+This Quarto page looks at data from the Tidy Tuesday ["Cats On The Move!"](https://github.com/rfordatascience/tidytuesday/blob/main/data/2023/2023-01-31/readme.md), from the publication McDonald JL, Cole H (2020) Data from: The small home ranges and large local ecological impacts of pet cats [United Kingdom]. Movebank Data Repository. [doi:10.5441/001/1.pf315732](https://datarepository.movebank.org/entities/datapackage/4ef43458-a0c0-4ff0-aed4-64b07cedf11c). 
+
+![](images/Grumpycat2.jpg){style="display:block; margin-left:auto; margin-right:auto; width:60%;"}
+
+# Load Libraries
+```{r}
+#| message: false
+#| warning: false
+
+library(tidyverse)
+library(ggmap)
+library(ggspatial)
+library(ggplot2)
+library(lubridate)
+library(here)
+```
+
+# Load in Data
+```{r}
+#| message: false
+#| warning: false
+
+tuesdata<-tidytuesdayR::tt_load('2023-01-31') # Load in data from Tidy Tuesdays 
+cats_uk<- tuesdata$cats_uk
+cats_uk_reference<-tuesdata$cats_uk_reference
+```
+
+# Look at teh data
+```{r}
+#| message: false
+#| warning: false
+
+glimpse(cats_uk)
+```
+
+# Data Wrestling
+Erm, I mean wrangling..hehe
+
+
+What is the min and max longitude and latitude?
+```{r}
+#| message: false
+#| warning: false
+#| output: false
+
+as.data.frame(cats_uk %>%
+  summarize(min_lat = min(location_lat, na.rm = FALSE),
+    max_lat = max(location_lat, na.rm = FALSE),
+    min_long = min(location_long, na.rm = FALSE),
+    max_long = max(location_long, na.rm = FALSE)))
+```
+
+
+Make a data frame with the min and max we just summarized.
+```{r}
+UK<-data.frame(lon = -5.113851, lat = 50.17032)
+```
+
+
+Get the base map of our data frame from Google.
+```{r}
+#| message: false
+#| warning: false
+#| 
+catmap<-get_map(UK,zoom = 18, maptype = "satellite") # creating base map from google and editing look
+```
+
+
+Let's only look at 1 day from the data frame.
+```{r}
+target_day <- as.Date("2017-06-24")
+```
+
+
+Give a start and end date for R. 
+```{r}
+start <- as.POSIXct(paste0(target_day, " 00:00:00"), tz = "UTC") # creating a start and end point for the day
+end   <- start + days(1)
+```
+
+```{r}
+cats_day <- cats_uk %>%
+  filter(tag_id == "Ares") %>% # filter for a specific cat -Ares 
+  filter(timestamp >= start, timestamp < end) %>%      # keep only that day
+  filter(!is.na(location_long), !is.na(location_lat)) # filter out NAs for lat and long
+```
+
+
+# Visualize the Cat's Movement 
+
+This was my first attempt. The blue dots are a bit hard to see. 
+```{r}
+#| warning: false
+#| message: false
+#| fig-align: "center"
+#| label: fig-Cat1 
+#| fig-cap: Timestamps of Ares the cat's movement in a single day.
+
+ggmap(catmap)+
+  geom_point(data = cats_day,
+             aes(x = location_long, y = location_lat, color = timestamp),
+             size = 2) +
+  scale_color_datetime(name = "Time",
+    date_labels = "%Y-%m-%d %H:%M",
+    guide = guide_colorbar(barheight = unit(80, "pt"))) +
+  annotation_scale( bar_cols = c("blue", "white"),
+                   location = "bl",
+                   height = unit(1.5, "mm"),
+                   width = unit(2, "mm"))+ 
+  annotation_north_arrow(location = "tr", # add a north arrow
+                         style = north_arrow_nautical(),
+                         height = unit(2, "cm"),
+                         width = unit(2, "cm"))+ 
+  coord_sf(crs = 4326)
+```
+
+
+
+```{r}
+#| warning: false
+#| message: false
+#| fig-align: "center" 
+#| label: fig-Cat2 
+#| fig-cap: Timestamps of Ares the cat's movement in a single day.
+
+ggmap(catmap) +
+  geom_point(data = cats_day,
+    aes(x = location_long, 
+        y = location_lat, 
+        color = timestamp), # plotting the axes 
+    size = 4) + # changes the size of the points 
+  scale_color_gradientn(colours = c("blue", "purple", "orange", "red"),   # add colors to bar 
+    name = "Time Points", # Add legend title 
+    labels = function(x) format(as.POSIXct(x, origin = "1970-01-01", tz = "UTC"),
+      "%Y-%m-%d %H:%M"), # this makes it so that the time point labels read as ymd hms and not a numeric 
+    guide = guide_colorbar(barheight = unit(6, "cm"), # making the color bar pretty 
+      barwidth  = unit(0.8, "cm"),
+      title.position = "top",
+      title.hjust = 0.5)) +
+  theme(legend.background = element_rect(color = "black"),
+    legend.title = element_text(color = "black", size = 12),
+    legend.text  = element_text(color = "gray20", size = 10),
+    plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),# changing the font size of the titles and axes
+    plot.subtitle = element_text(hjust = 0.5),
+        plot.caption = element_text(hjust = 0.5, face = "italic"),
+        axis.title = element_text(size = 13)) +
+  labs( title = "Have you seen Ares?", # Creating title 
+      subtitle = "Time points of Ares the cat during a single day", # Creating subtitle
+      caption = "Data from The Small Home Ranges and Large Ecological Impacts\n of Pet Cats in the United Kingdom",  # Create a caption for more info 
+      x = "Longitude", # Editing x axis title 
+      y = "Latitude") + # Editing y axis title 
+  coord_quickmap()
+```
+
+Much better.
+
+## Results?
+
+It seems like Ares tends to stay in the "center" of this neighborhood during the late night and makes his way to the outskirts during the afternoon and eventually makes his way back tot he center during dusk. 

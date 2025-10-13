@@ -1,0 +1,110 @@
+---
+title: "Quarto week 07a"
+author: Emily C Rutkowski
+format: html
+---
+
+# Load libraries
+
+```{r}
+library(tidyverse)
+library(here)
+library(maps)
+library(mapdata)
+library(mapproj)
+```
+
+```{r}
+popdata<- read_csv(here("Week_07", "data", "CApopdata.csv"))
+stars<- read_csv(here("Week_07","data","stars.csv"))
+```
+
+```{r}
+# get data for the entire world
+world<-map_data("world")
+head(world)
+```
+
+```{r}
+# get data for the USA
+usa<-map_data("usa")
+head(usa)
+```
+
+```{r}
+# get data for italy
+italy<-map_data("italy")
+head(italy)
+```
+
+```{r}
+# get data for states
+states<-map_data("state")
+head(states)
+```
+
+```{r}
+# get data for counties
+counties<-map_data("county")
+head(counties)
+```
+
+```{r}
+ggplot()+
+  geom_polygon(data = world, aes(x = long, y = lat, group = group, fill = region),# make sure to add group=group
+               color = "black") + # add color outside of aesthetics 
+  guides(fill = FALSE)+ # dont take up entire screen 
+  theme(panel.background = element_rect(fill = "lightblue"))+
+  coord_map(projection = "sinusoidal", #so that its not "flat"
+            xlim = c(-180,180))
+```
+
+## Now lets make a map of states
+```{r}
+# Use the states dataset
+head(states)
+```
+
+```{r}
+# Use the states dataset
+CA_data<-states %>%
+  filter(region == "california")
+```
+
+```{r}
+ggplot()+
+  geom_polygon(data = CA_data, aes( x = long, y = lat, group = group),
+               color = "black") +
+  guides(fill = FALSE)
+```
+
+```{r}
+CApop_county<-popdata %>%
+  select("subregion" = County, Population)  %>% # rename the county col
+  inner_join(counties) %>%
+  filter(region == "california") # some counties have same names in other states
+```
+##Plot new joined data set 
+```{r}
+ggplot()+
+geom_polygon(data = CApop_county, 
+             aes(x = long, 
+                 y = lat, 
+                 group = group,
+                 fill = Population),
+             color = "black")+
+  coord_map()+
+  theme_void()+
+  scale_fill_gradient(trans = "log10")+ # log to make the colors on lower gradient scale otherwise la looks much diff than other counties
+  geom_point(data = stars, # add a point at all my sites
+             aes(x = long,
+                 y = lat,
+                 size = star_no))+
+   coord_map()+
+  theme_void() +
+  scale_fill_gradient(trans = "log10")+
+  labs(size = "# stars/m2")
+
+ggsave(here("Week_07", "output", "CApop.pdf"))
+```
+
