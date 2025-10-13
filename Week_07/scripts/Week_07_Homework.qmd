@@ -15,9 +15,9 @@ format:
     page-layout: article
     code-copy: true 
     lightbox: true 
-knitr: 
-  opts_chunk: 
-    fig.path: "../output/" # added ../ because qmd is in scripts folder 
+#knitr: 
+ # opts_chunk: 
+  #  fig.path: "../output/" # added ../ because qmd is in scripts folder 
 ---
 ## Introduction 
 
