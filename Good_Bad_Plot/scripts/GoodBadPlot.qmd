@@ -1,0 +1,367 @@
+---
+title: "Good Plot Bad Plot"
+author: "Emily C Rutkowski"
+format: 
+  html: 
+    toc: true
+    theme: darkly
+    smooth-scroll: true 
+    respect-user-color-scheme: true 
+    link-external-newwindow: true
+    linkcolor: pink 
+    page-layout: article
+    code-copy: true 
+    code-fold: true
+    lightbox: true 
+resources:
+  - ../output/final_bad_plot.gif
+  - ../output/final_goodplot.gif
+   
+  
+---
+
+## Introduction
+
+This Quarto document looks at both the good and bad ways to make a plot. I've used the "schrute" package from Tidy Tuesdays data set which includes all dialogue from every season and every character. 
+
+## Download data from Tidy Tuesdays
+```{r}
+#| message: false
+#| warning: false
+tuesdata <- tidytuesdayR::tt_load('2020-03-17')
+tuesdata <- tidytuesdayR::tt_load(2020, week = 12)
+
+
+office_ratings <- tuesdata$office_ratings
+```
+
+## Load Libraries 
+```{r}
+#| message: false
+#| warning: false
+library(tidyverse)
+library(ggplot2)
+library(here)
+library(schrute)
+library(stringr)
+library(gganimate) # animations
+library(magick) # for images 
+library("gifski")
+```
+
+## Give the dataset a name 
+```{r}
+#| message: false
+#| warning: false
+schrutedata<-schrute::theoffice
+```
+
+## Find the phrase 
+
+Now, lets find all instances of "That's what she said" (and variations). 
+ The regex pattern explained:
+ - ignore_case = TRUE catches all capitalization variations
+ - "that'?s" catches both "that's" and "thats"
+ - "what she sa" catches cut-off versions like "that's what she sa-"
+
+```{r}
+#| message: false
+#| warning: false
+twss_data<-schrutedata %>% #twss(thats what she said)
+  filter(str_detect(text, regex("that'?s what she sa", ignore_case = TRUE))) #detect all versions of twss
+```
+
+# How many times was it said?
+```{r}
+#| message: false
+#| warning: false
+print(paste("Total 'That's what she said' instances:", nrow(twss_data)))
+```
+ **34 times** 
+ 
+ # How many times was it said by season?
+```{r}
+#| message: false
+#| warning: false
+twss_by_season<-twss_data %>%
+  group_by(season) %>% # group by season 
+  summarise(count = n()) %>% # count how many times 
+  ungroup()
+
+print(twss_by_season)
+```
+
+
+# Now lets see who said it the most. I'm betting _Michael_. 
+```{r}
+twss_by_character<-twss_data %>%
+  group_by(character) %>% # group by office characters 
+  summarise(count = n()) %>% # count how many times 
+  arrange(desc(count)) # show in most to least times 
+
+print(twss_by_character)
+```
+
+
+## Let's see "What She Said!"
+
+# BAD PLOT 
+
+What are all the ways this is a bad plot?
+
+- <u> Chart type </u>
+  - **_Inappropriate visualization_**: Uses polar coordinates sequential data, making comparisons almost impossible
+  Should be bar charts but creates wedges in polar coordinates and that can distort data representation
+  I've added unnecessary animations that amke it harder to see all the data at once
+  - **_Color and Visual Design_**: The rainbow color scheme has no real meaning- just bright colors
+  I chose bright yellow text on a light background making it very hard to see and read
+  I used many different colors throughout the entire plot- no consistency 
+  The lightblue plot adds no value and reduces contrast- its just a distracting background
+  - **_Scale & Accuracy_**: I've added y-axis extremely long ticks and removed the values(put them in coord)
+  I changed the x-axis to start at an angle
+  I removed reference grid lines
+  - **_Labels_**: Incorrect grammar, capitalization and tone.
+  Multiple fonts
+  Angled text
+  Too small or too large of text 
+  The legend covers data and key is too wide
+  The border is excessively thick 
+  - **_Animation_**: "elastic-out" animation is dramatic and distracting
+  Transitions make it very hard to read in enough time
+  I added shadow trails to make confusing ghost effect - cant remember which is which
+  The transition-state doesnt make sense: I show 1 season at a time which defeats the purpose of the comparison 
+  
+
+![Bad Plot](final_bad_plot2.gif)
+
+```{r}
+#| message: false
+#| warning: false
+#| output: false
+bad_plot <- twss_by_season %>% # load in season data 
+  ggplot(aes(x = season, y = count)) + # plot count by season 
+  
+   geom_col(aes(fill = factor(season)), width = 3, color = "yellow") + # Fill bars with season and make really wide with bright border color
+  scale_fill_manual(values = rainbow(9)) + # rainbow colors - hard to look at (9 seasons)
+  
+  scale_x_continuous(breaks = seq(1, 9, by = 0.5)) + # too many x-axis ticks
+ 
+  # set all plot labels with terrible formatting
+  labs(title = "tHaTS whAT ShE sAiD! !!1 BY season ", 
+    subtitle = "a mega important analysis of michael scotts most iconic line", 
+    x = " season # 1->9",
+    y = "# of time said",
+    caption = "Data: schrute package | Made with ggplot2 in R | The Office is the best show ever created fight me ",
+    fill = "season") +
+  
+  theme_minimal() + 
+  
+  # Layer on all the ugly customizations
+  theme(axis.title.x = element_text(angle = 30, hjust = 0.6, size = 8, color = "purple"),
+    axis.title.y = element_text(size = 7, color = "red", face = "italic", hjust = 0.8, vjust = 4), # make everything off-centered and hard to read-hurts the eyes 
+    
+    axis.text.x = element_text(margin = margin(t = .3, unit = "cm")),# x-axis text with weird margin
+    axis.text.y = element_blank(), # remove y axis numbers completely 
+  
+    axis.ticks.x = element_line(color = "hotpink", size = 4, linetype = "dotdash"),
+    axis.ticks.y = element_line(color = "green", size = 0.4, linetype = "solid"),
+    axis.ticks.length.x = unit(3, "cm"), # long protruding ticks 
+    axis.ticks.length.y = unit(2, "cm"),
+    
+    # Messy title format
+    plot.title = element_text(size = 20, face = "bold", hjust = 0.5, color = "green"),
+    plot.subtitle = element_text(size = 8, hjust = 0.3, color = "orange"),
+    plot.caption = element_text(size = 6, hjust = 0.5, face = "bold"),
+    
+    # Legend covering the data
+    legend.position = c(0.71, 0.53),
+    legend.text = element_text(size = 6, color = "yellow"),
+    legend.key.justification = c(0.8, 0.3),
+    legend.key.width = unit(1.5, "cm"),
+    legend.key.height = unit(0.3, "cm"),
+    legend.box.spacing = unit(20, "pt"),
+    
+    # Remove useful grid lines
+    panel.grid.major.y = element_blank(),
+    
+    # heavy panel border and distracting background color 
+    panel.border = element_rect(color = "black", size = 5),
+    panel.background = element_rect(fill = "lightblue"),
+    plot.background = element_rect(fill = "lightblue")) +
+  
+  geom_text(aes(label = paste0("Season ", season)), vjust = 2, size = 3, color = "white") + # cluttered, overlapping annotations 
+  
+  # Wrong chart type- makes all the small detailed changes also look even more terrible lol 
+  coord_polar(start = 1.5)
+
+animplot<-bad_plot+ # add animations to a plot that should be static 
+   transition_states(season, 
+                    transition_length = 6, 
+                    state_length = 3) +
+  ease_aes("elastic-out") +
+  shadow_wake(wake_length = 0.3) # good luck trying to remember which is which lol
+animplot
+
+# save animated plot 
+
+anim_save(here("Week_08", "output", "my_bad_plot.gif"), 
+          animation = animate(animplot, nframes = 100, fps = 10, end_pause = 20))
+
+
+```
+
+
+
+```{r}
+#| message: false
+#| warning: false
+#| output: false
+
+# Add a gif on top of bad plot.
+
+# Load files
+plot_gif <- image_read(here("Week_08", "output", "my_bad_plot.gif"))
+overlay_gif <- image_read("https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExdmpneTUxeHdwaWZrajRwdnJ4ajc1a25hdG9xN3pxcXg5Y2hnYWFheCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/SAAMcPRfQpgyI/giphy.gif")
+
+# Resize 
+overlay_gif <- image_scale(overlay_gif, "150")
+
+# Get frame counts
+n_plot <- length(plot_gif)
+n_overlay <- length(overlay_gif)
+
+print(paste("Creating", n_plot, "frames..."))
+
+# Composite each frame 
+combined_frames <- list()  # use a list insteadd
+
+for(i in 1:n_plot) {
+  # Which overlay frame to use (loops if needed)
+  overlay_idx <- ((i - 1) %% n_overlay) + 1
+  
+  # Composite this frame
+  frame <- image_composite(plot_gif[i], overlay_gif[overlay_idx], 
+                          offset = "+80+350")
+  
+  # Add to list
+  combined_frames[[i]] <- frame
+  
+  # Progress indicator
+  if(i %% 10 == 0) print(paste("Frame", i, "of", n_plot))}
+
+# Join all frames into one magick object
+result <- image_join(combined_frames)
+
+# Save and make faster 
+image_write_gif(result, 
+                path = here("Good_Bad_Plot", "output", "final_bad_plot1.gif"),
+                delay = 1/17)  
+
+## This was admittedly difficult as I was having problems adding a gif to an animated plot- needed to use the internet for help with this one. 
+```
+
+# Good Plot 
+
+![Good Plot](final_goodplot.gif)
+What are all the ways this is a good plot?
+
+- <u> Chart type </u>
+  - **_Appropriate visualization_**: Standard bar chart for comparing across seasons
+  - Static- shows all data simultaneously
+  - No overlapping bars
+  - **_Color & Visual_**: Uses 1 color- color blind friendly color
+  - Dark text on light background ensures readability
+  - Clean and clear of any unnecessary decorations
+  - Titles are in grayscale order to create visual order 
+  - **_Scale_**: y-axis starts at 0- honest representation of proportions
+  - Appropriate tick marks with spacing
+  - Values displayed on top of bars for direct data - dont have to repy on axis
+  - **_Labels_**: Clear titles
+  - Professional language
+  - Informative labels  and logical title flow 
+  _ Fonts and sizes are for comfortable readability
+  - Proper alignment of titles and labels 
+  - Proper whitespace and grid 
+
+*"Above all else, show the data clearly."*
+
+```{r}
+#| message: false
+#| warning: false
+#| output: false
+good_plot <- twss_by_season %>% # load in data 
+  ggplot(aes(x = factor(season), y = count)) + # plot count by season 
+  
+  geom_col(fill = "#0173B2", alpha = 0.9, width = 0.7) + # Simple bars with color blind friendly color 
+  
+  # Clear, informative labels
+  labs(title = '"That\'s What She Said" Usage by Season',
+    subtitle = "Frequency of the iconic phrase throughout The Office Series",
+    x = "Season",
+    y = "Number of Instances",
+    caption = "Source: The Office transcript data from schrute R package") +
+  
+  # Clean, minimal theme
+  theme_minimal() +
+  theme(axis.text = element_text(size = 11, color = "gray20"),
+    axis.title = element_text(size = 12, face = "bold", color = "gray20"),
+    
+    plot.title = element_text(size = 16, face = "bold", hjust = 0, 
+                             margin = margin(b = 5)),
+    plot.subtitle = element_text(size = 11, color = "gray40", hjust = 0,
+                                 margin = margin(b = 15)),
+    plot.caption = element_text(size = 9, color = "gray50", hjust = 1,
+                               margin = margin(t = 10)),
+    
+    # Remove unnecessary elements
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank(),
+    plot.margin = margin(15, 15, 15, 15)) + # add subtle spacing for readability
+  
+  # Direct data labels 
+  geom_text(aes(label = count), vjust = -0.5, size = 4, color = "gray30") +
+  
+  scale_y_continuous(expand = expansion(mult = c(0, 0.1))) # y-axis starts at 0 
+
+ggsave(here("Good_Bad_Plot","output","goodplot.png"))
+
+# Display good plot
+print(good_plot)
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| output: false
+
+# Add a gif into the good plot.
+
+twssplot<-image_read(here("Good_Bad_Plot","output","goodplot.png"))
+twssgif<-image_read("https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExMGg5bWUwanY4NTBrdmtxenFtMXAwa3dreTBhYnkxMXIzOGlnNWVxNCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/esR1eKgmOnxWKR627f/giphy.gif")
+twssgif <- image_scale(twssgif, "500")  # resize the overlay so that its not too large - otherwise it takes up entire screen 
+
+n_frames <- length(twssgif) # Composite frame-by-frame
+# length() on a magick image object returns the frame count
+# Needed to know how many times to loop
+combined_frames <- list() # Create an empty list to store the composited frames
+
+for(i in 1:n_frames) { # Loop through each frame of the gif 
+  # i goes from 1 to the total number of frames
+  frame <- image_composite(twssplot, twssgif[i], # base image and cuurent frame
+                          offset = "+1600+170", # position
+                          operator = "over") # place gif on top of plot 
+  combined_frames[[i]] <- frame  #store the composited frame in the list at position i
+  #[[i]] accesses the i-th element of the list
+  # this builds the collection of frames one at a time
+  
+  if(i %% 10 == 0) print(paste("Frame", i, "of", n_frames)) } # Print progress update every 10 frames
+
+# Join and save the image 
+result <- image_join(combined_frames)
+
+image_write_gif(result, 
+                path = here("Good_Bad_Plot", "output", "final_goodplot.gif"),
+                delay = 1/10)
+```
+
+
