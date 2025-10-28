@@ -1,0 +1,159 @@
+---
+title: "Week 09 Homework"
+format: 
+  html:
+    toc: true
+    toc-title: "Explore" 
+    theme: superhero
+    smooth-scroll: true 
+    respect-user-color-scheme: true 
+    link-external-newwindow: true
+    linkcolor: orange 
+    page-layout: article
+    code-copy: true 
+    code-fold: true
+    lightbox: true 
+---
+
+# Introduction 
+
+This Quarto document examines intertidal algae coverage patterns across different tide heights (low, mid, and high tide) at 14 sites along the Pacific coast. Sites are ordered from south to north by latitude, and tide heights are arranged from low to high to reflect their natural progression. The visualization shows average algae coverage with standard error bars for each site-tide combination.
+
+# Intertidal Data Cleaning and Visualization
+
+## Load libraries
+```{r}
+#| message: false
+#| warning: false
+library(tidyverse)
+library(here)
+library(janitor)
+library(knitr)
+```
+
+## Load in data
+
+```{r}
+#| message: false
+#| warning: false
+intertidal_data <- read_csv(here("Week_09", "data", "intertidaldata.csv"))  
+```
+
+## View the Data 
+```{r}
+view(intertidal_data)
+```
+
+## Clean up the data 
+```{r}
+#| message: false
+#| warning: false
+# Clean column names with janitor
+intertidal_clean <- intertidal_data %>%  # fixes spaces and makes everything lowercase
+  clean_names()  # Fix the messy column names
+```
+
+```{r}
+#| message: false
+#| warning: false
+# Clean up the quadrat column (tide heights) with stringr
+intertidal_clean <- intertidal_clean %>%  
+  mutate(quadrat = str_trim(quadrat),  # remove extra spaces
+        quadrat = str_replace_all(quadrat, "\\.", ""),  # remove periods
+        quadrat = str_replace_all(quadrat, "[0-9]", ""),  # remove numbers
+        quadrat = str_trim(quadrat))  # make sure no spaces 
+  
+```
+
+## Convert to factors 
+```{r}
+#| message: false
+#| warning: false
+# Convert quadrat to an ordered factor: low -> mid -> high
+intertidal_clean<- intertidal_clean %>%
+  mutate(quadrat = factor(quadrat, # make quadrat column a factor
+                          levels = c("Low", "Mid", "High"), # set the order 
+                          ordered = TRUE)) # make it ordered 
+```
+
+
+## Order sites by latitude 
+```{r}
+#| message: false
+#| warning: false
+# Order sites by latitude (south to north along the Pacific coast)
+site_order <- c("Scripps", "Dana Point", "Crystal Cove", "Little Corona", 
+                "Carpenteria", "Shell Beach", "Hazards", "Bodega", 
+                "Cape Arago", "Fogarty Creek", "Starfish Point", 
+                "Point St. George", "Cape Meares", "Pyramid Point")
+```
+
+## Convert to factor 
+```{r}
+#| message: false
+#| warning: false
+# Convert site to ordered factor
+intertidal_clean <- intertidal_clean%>%
+  filter(!is.na(site))  %>% # Filter out NA sites
+  mutate(site = factor(site, #make site a factor
+                       levels = site_order, # use the north to south order 
+                       ordered = TRUE)) # make it ordered 
+```
+
+
+# Plot the Data 
+
+Create a bar plot showing the average algae coverage by tide height 
+```{r}
+# Calculate the mean for each tide 
+plot_data<- intertidal_clean %>%
+  group_by(site, quadrat) %>%
+  summarise(mean_algae = mean(algae, na.rm = TRUE),
+            stder_algae = sd(algae, na.rm = TRUE) / sqrt(n()),
+            n_samples = n(),
+            .groups = "drop")
+```
+
+## Summary data 
+```{r}
+kable(plot_data, 
+      caption = "Summary of Average Algae Coverage by Site and Tide Height")
+```
+
+
+## Plot the data 
+```{r}
+plot<-ggplot(plot_data,
+             aes(x = quadrat, # factored tide height on x axis 
+             y = mean_algae, 
+             fill = quadrat))+ # color bars by tide height 
+  geom_col(position = "dodge")+
+  geom_errorbar(aes(ymin = mean_algae - stder_algae, # bottom of error bar 
+                    ymax = mean_algae + stder_algae), # top of error bar 
+                width = 0.3, # width of error bars
+                position = position_dodge())+  #dodge overlapping objects side to side 
+  labs(title = "Average Algae Coverage Across Tide Heights by Site",
+       subtitle = "Sites order from south to north along the Pacific Coast.",
+       x = "Tide Height", 
+       y = "Average Percent Algae Coverage",
+       fill = "Tide Height")+
+  facet_wrap(~site, ncol = 3)+ # separate for each site 
+  theme_minimal()+
+  theme(plot.title = element_text(face = "bold", size = 14, hjust = 0.5),
+        plot.subtitle = element_text(size = 10, hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 0.5),
+        strip.text = element_text(face = "bold"))+
+  scale_fill_manual(values = c( "Low" = "#2c7bb6",
+                                "Mid" = "#abd9e9",   
+               "High" = "#fdae61"))+
+    ylim(0,100)
+  plot
+```
+
+```{r}
+ggsave(here("Week_09", "output", "Percent_Algae_Plot.png"),
+       width = 12,
+       height = 10,
+       dpi = 300)
+```
+
