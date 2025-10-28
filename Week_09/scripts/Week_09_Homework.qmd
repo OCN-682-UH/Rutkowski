@@ -107,11 +107,11 @@ Create a bar plot showing the average algae coverage by tide height
 ```{r}
 # Calculate the mean for each tide 
 plot_data<- intertidal_clean %>%
-  group_by(site, quadrat) %>%
-  summarise(mean_algae = mean(algae, na.rm = TRUE),
+  group_by(site, quadrat) %>% # group by site and tide 
+  summarise(mean_algae = mean(algae, na.rm = TRUE), 
             stder_algae = sd(algae, na.rm = TRUE) / sqrt(n()),
-            n_samples = n(),
-            .groups = "drop")
+            n_samples = n(), # observations 
+            .groups = "drop") # ungroup after summarizing 
 ```
 
 ## Summary data 
@@ -139,19 +139,19 @@ plot<-ggplot(plot_data,
        fill = "Tide Height")+
   facet_wrap(~site, ncol = 3)+ # separate for each site 
   theme_minimal()+
-  theme(plot.title = element_text(face = "bold", size = 14, hjust = 0.5),
+  theme(plot.title = element_text(face = "bold", size = 14, hjust = 0.5), # making labels pretty 
         plot.subtitle = element_text(size = 10, hjust = 0.5),
         axis.text.x = element_text(angle = 45, hjust = 0.5),
         strip.text = element_text(face = "bold"))+
   scale_fill_manual(values = c( "Low" = "#2c7bb6",
                                 "Mid" = "#abd9e9",   
                "High" = "#fdae61"))+
-    ylim(0,100)
+    ylim(0,100) # set y axis from 0-100 since its % 
   plot
 ```
 
 ```{r}
-ggsave(here("Week_09", "output", "Percent_Algae_Plot.png"),
+ggsave(here("Week_09", "output", "Percent_Algae_Plot1.png"),
        width = 12,
        height = 10,
        dpi = 300)
