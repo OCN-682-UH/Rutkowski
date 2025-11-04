@@ -1,0 +1,145 @@
+---
+title: "Week 10 Homework"
+author: "Emily C Rutkowski"
+format: 
+  html:
+    toc: true
+    theme: darkly
+    smooth-scroll: true 
+    respect-user-color-scheme: true 
+    link-external-newwindow: true
+    page-layout: article
+    code-copy: true 
+    lightbox: true 
+    code-fold: true
+---
+
+
+## Introduction
+
+**Working with Functions**
+
+I'll create:
+
+  - A plotting function - to visualize chemical relationships across different zones
+  - A summary statistics function - to calculate group statistics for any variable
+
+
+The Two Functions:
+
+plot_chemical_relationship() - A plotting function that:
+
+ - Makes scatter plots of any two variables from the dataset
+ - Can color the points by different groups 
+ - Shows flexibility by working with or without color grouping
+
+
+calculate_group_summary() - A non-plotting function that:
+
+ - Calculates statistics (mean, median, std dev, min, max) for any numeric variable
+ - Groups results by any categorical variable (like Zone or Tide_time)
+ 
+ 
+## Load libraries
+```{r}
+#| message: false
+#| warning: false
+
+library(tidyverse)
+library(here)
+```
+ 
+## Read in Data 
+```{r}
+#| message: false
+#| warning: false
+
+data <- read_csv(here("Week_10", "data", "chemicaldata_maunalua.csv"))
+```
+ 
+ _Remember to view the data!_
+ 
+## Function 1
+  # Plotting Function
+ 
+ This function will plot data from the MaunaLua dataframe with or without color grouping.
+ 
+```{r}
+#| message: false
+#| warning: false
+
+plot_chemical_relationship <- function(data, x, y, color_by = NULL) { # define the first function with x, y variables and optional variable to color the points 
+  if (!missing(color_by)) { # checks if color_by variable is missing or not 
+    ggplot(data, aes(x = {{x}}, # create a plot with colored points
+                     y = {{y}},
+                     color = {{color_by}}))+ 
+      geom_point(size = 3, alpha = 0.7)+ # add scatter plot points with presets 
+      labs(x = as_label(enquo(x)), #adds a label for x - convert variable names to text 
+           y = as_label(enquo(y)), # adds a label for y 
+           color = as_label(enquo(color_by)), # label for color legend 
+           title = paste("Relationship between", as_label(enquo(x)), "and", as_label(enquo(y))))+ # inserts label between qutes 
+      theme_minimal()+
+      theme(plot.title = element_text(hjust = 0.5, size = 14, face = "bold")) # set title presets 
+  } else{ # else create a plot without color grouping. all points are the same color. 
+    ggplot(data, aes( x = {{x}}, 
+                     y = {{y}}))+
+      geom_point(size = 3, alpha = 0.7, color = "steelblue") +
+      labs(x = as_label(enquo(x)), 
+           y = as_label(enquo(y)),
+           title = paste("Relationship between", as_label(enquo(x)), "and", as_label(enquo(y)))) +
+      theme_minimal() +
+      theme(plot.title = element_text(hjust = 0.5, size = 14, face = "bold"))
+  }
+
+}
+
+```
+ 
+ **Example 1**
+ With color
+```{r}
+plot_chemical_relationship(data, x = Salinity, y = pH, color_by = Zone)
+```
+ 
+**Example 2**
+Without color- automatically makes all points steelblue color 
+```{r}
+plot_chemical_relationship(data, x = Temp_in, y = Phosphate)
+```
+
+## Function 2
+  # Non-plot function 
+
+This function calculates statistics for any numeric variable and groups them by any categorical variable.
+
+```{r}
+calculate_group_summary <- function(data, numeric, group) { # create a function to calculate statistics for variable and group by a different variable 
+  data %>%
+    filter(!is.na({{numeric}})) %>% # remove rows where the numeric value in missing 
+    group_by({{group}}) %>% # group data by group variable 
+    summarise(count = n(), # summarise statistics 
+              mean = mean({{numeric}}, na.rm = TRUE),
+              median = median({{numeric}}, na.rm = TRUE),
+              std_dev = sd({{numeric}}, na.rm = TRUE),
+              min = min({{numeric}}, na.rm = TRUE),
+              max = max({{numeric}}, na.rm = TRUE)) %>%
+    ungroup() %>%
+    arrange(desc(mean)) # show in descending order 
+}
+```
+
+**Example 1**
+Use function to show statistics for Salinity by Zone 
+```{r}
+salinity_sum<-calculate_group_summary(data, numeric = Salinity, group = Zone)
+print(salinity_sum)
+```
+
+ **Example 2**
+ Use function to show statistics for pH by Tide and time (a different variable and group)
+```{r}
+ph_sum<-calculate_group_summary(data, numeric = pH, group = Tide_time)
+print(ph_sum)
+```
+ 
+ 
