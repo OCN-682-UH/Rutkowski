@@ -6,9 +6,10 @@ Nyssa Silbilger MBIO 612 course - **_Data Science Fundamentals in R_**!
 **Contents include**: 
 folder for each week consisting of data, scripts, and output.
 
-### Repository Folder:
+## Repository Folder:
+[Week_02](https://github.com/OCN-682-UH/Rutkowski/tree/main/Week_02)
 
-## Shiny App
+### Shiny App
 [Click here to view my Flint Water Crisis Shiny App](https://ecrutkow.shinyapps.io/flint-water-crisis-homework/)
 
-[Week_02](https://github.com/OCN-682-UH/Rutkowski/tree/main/Week_02)
+
