@@ -1,0 +1,170 @@
+---
+title: "Tidy Tuesday-Flint Water Crisis"
+author: "Emily C Rutkowski"
+format: 
+  html:
+    toc: true
+    theme: darkly
+    smooth-scroll: true 
+    respect-user-color-scheme: true 
+    link-external-newwindow: true
+    page-layout: article
+    code-copy: true 
+    lightbox: true 
+    code-fold: true
+---
+
+# Introduction
+
+## Introduction
+
+This week's Tidy Tuesday dataset examines lead concentrations in water samples collected during the 2015 Flint Water Crisis. The dataset includes two sources: citizen science data collected by Virginia Tech researchers and official samples from the Michigan Department of Environmental Quality (MDEQ). 
+
+The Flint Water Crisis began in April 2014 when the city switched its water source from Lake Huron to the Flint River without proper corrosion control. This resulted in lead leaching from aging pipes into the drinking water supply, exposing approximately 100,000 residents to elevated lead levels.
+
+For this analysis, I am learning how to use **`case_when()`** in R. This function allows me to create categorical variables based on multiple conditions. I used `case_when()` to classify lead concentrations into three risk categories: "Safe" (< 5 ppb), "Elevated" (5-15 ppb), and "Action Level Exceeded" (≥ 15 ppb). This skill is particularly useful for transforming continuous numeric data into meaningful categories for visualization and interpretation.
+
+For more information about the Flint Water Crisis, see [Loux and Gibson  (2018)](https://onlinelibrary.wiley.com/doi/abs/10.1111/test.12187?casa_token=av3lP7OmqS0AAAAA%3AQAF3yU5kGzsUkqi1VlXkMlIN8ExolHZBSkdJ3hIHnlptUES57dGVoXjE3qdwPPHtLHNRd9VvX1x8f6VN).
+
+# Load Libraries
+```{r}
+#| message: false
+#| warning: false
+library(tidyverse)
+library(here)
+library(tidytuesdayR)
+```
+
+# Load in Data 
+```{r}
+#| message: false
+#| warning: false
+tuesdata<- tt_load('2025-11-04') # load flint dataset
+```
+
+## Extract two datasets
+```{r}
+#| message: false
+#| warning: false
+flint_vt<-tuesdata$flint_vt # virginia tech citizen science data 
+flint_mdeq<-tuesdata$flint_mdeq # Michigan DEQ data 
+```
+
+# Data Wrangling 
+```{r}
+#| message: false
+#| warning: false
+# I want to combine both datasets so will rename the column in mdeq to match with vt 
+flint_mdeq_clean <- flint_mdeq %>%
+  select(sample, lead = lead2) %>% # rename lead2 to lead 
+  filter(!is.na(lead)) # remove NAs
+```
+
+```{r}
+#| message: false
+#| warning: false
+# Combine datasets 
+flint_combined <- bind_rows(flint_vt %>%
+                              mutate(source = "Virginia Tech"), # adding a source column to track which dataset each row comes from 
+                            flint_mdeq_clean %>%
+                              mutate(source = "Michigan DEQ"))
+```
+
+# New skill: case_when()
+
+case_when() creates a new categorical variable to categorize lead concentration levels. It's sorta like if else . This is a good function for determining risk levels. 
+
+For our Flint data, we can categorize lead levels:
+
+0-5 ppb → "Safe"
+5-15 ppb → "Elevated"
+15+ ppb → "Action Level Exceeded"
+
+```{r}
+#| message: false
+#| warning: false
+flint_combined<-flint_combined %>% # case_when checks each condition in order
+  mutate(risk_category = case_when( lead < 5 ~ "Safe", # ~ means "then assign this value" .... # If lead is less than 5, category is "Safe"
+                                    lead >= 5 & lead < 15 ~ "Elevated", # If lead is between 5 and 15, category is "Elevated"
+                                    lead >= 15 ~ "Action Level Exceeded", # If lead is 15 or more, category is "Action Level Exceeded"
+                                    TRUE ~ "Unknown")) # Catch-all for any other cases
+```
+
+```{r}
+#| message: false
+#| warning: false
+# Convert risk_category to a factor with a specific order to control how it appears in the plot 
+flint_combined <- flint_combined %>%
+  mutate(risk_category = factor(risk_category, # convert to factor 
+                                levels = c("Safe", "Elevated", "Action Level Exceeded")))
+```
+
+Lets take a look at the first few rows to see the new column and see that it converted to factor.
+```{r}
+#| message: false
+#| warning: false
+head(flint_combined)
+```
+
+# Data Summary
+
+A summary table showing counts and percentages by category and source.
+```{r}
+#| message: false
+#| warning: false
+summary_table<- flint_combined %>%
+  group_by(source, risk_category) %>% #group by source and risk category 
+  summarise(count = n(), .groups = "drop") %>% #count samples in each group
+  group_by(source) %>%
+  mutate(percentage = round(100 * count / sum(count), 1)) # calculate %
+```
+
+```{r}
+print(summary_table)
+```
+
+# Data Visualization
+
+```{r}
+#| message: false
+#| warning: false
+# A stacked bar chart showing risk categories by source
+plot<- ggplot(flint_combined,
+              aes(x = source,
+                  fill = risk_category))+
+  geom_bar(position = "fill", color = "white", size = 0.5)+ # position = fill makes them stacked 
+  geom_text(aes(label = after_stat(count)),
+            stat = "count",
+            position = position_fill(vjust = 0.5),
+            color = "white",
+            fontface = "bold")+
+  scale_fill_manual(values = c("Safe" = "#2ecc71", # customize the colors for risk - green yellow red 
+                               "Elevated" = "#f39c12", 
+                               "Action Level Exceeded" = "#e74c3c")) +
+  scale_y_continuous(labels = scales::percent)+ # convert y-axis to %
+  labs(title = "Lead Risk Categories in Flint Water Samples (2015)", # add labels 
+       subtitle = "Comparison of Virginia Tech and Michigan DEQ sampling efforts",
+       x = "Data Source",
+       y = "Percentage of Samples",
+       fill = "Risk Category",
+       caption = "EPA Action Level = 15 ppb | Data: TidyTuesday 2025-11-04")+
+  theme_minimal()+
+  theme(plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
+    plot.subtitle = element_text(size = 12, hjust = 0.5, color = "gray40"),
+    legend.position = "bottom",
+    panel.grid.major.x = element_blank())
+
+# display plot
+print(plot)
+```
+
+```{r}
+#| message: false
+#| warning: false
+# Save plot 
+ggsave(here("Tidy_Tuesday", "Week_01", "output", "TT_Week01_barchart.png"),
+            width = 10,
+            height = 6,
+            dpi = 300)
+```
+
