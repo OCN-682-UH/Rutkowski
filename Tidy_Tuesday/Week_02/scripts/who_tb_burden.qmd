@@ -1,0 +1,358 @@
+---
+title: "Tidy Tuesday Week 2"
+author: "Emily C Rutkowski"
+format: 
+  html:
+    toc: true
+    theme: darkly
+    smooth-scroll: true 
+    respect-user-color-scheme: true 
+    link-external-newwindow: true
+    page-layout: article
+    code-copy: true 
+    lightbox: true 
+    code-fold: true
+---
+
+This week's Tidy Tuesday explores global tuberculosis (TB) burden data from the World Health Organization. TB remains one of the world's deadliest infectious diseases, with over 10 million people falling ill and over 1 million dying from TB each year. 
+
+A critical factor in TB mortality is HIV status - people living with HIV are much more vulnerable to TB infection and death. This analysis examines how TB mortality differs between HIV-positive and HIV-negative populations across countries, and tracks how these rates have changed over the past decade (2013-2023).
+
+NEW SKILL: Windows functions (lag) which calculates year-over-year changes and create interactive maps with the package - plotly 
+
+# Load Packages
+```{r}
+#| message: false
+#| warning: false
+# Load packages
+library(tidyverse) # its got everything
+library(sf) # geographic/spatial data 
+library(rnaturalearth) # provides world map data 
+library(rnaturalearthdata) # companion package with map data
+library(scales) # helps format numbers nicely 
+library(plotly) # makes interactive plots and maps 
+library(htmlwidgets) # saves interactive plots as HTML files 
+library(here)
+
+```
+
+# Load in Data
+```{r}
+#| message: false
+#| warning: false
+# Load the WHO TB data from TidyTuesday using the tidytuesdayR package
+tuesdata<- tidytuesdayR::tt_load('2025-11-11')
+```
+## Extract data from list
+```{r}
+#| message: false
+#| warning: false
+# Extract data from list
+who_tb_data<- tuesdata$who_tb_data
+```
+## Take a look at the data 
+```{r}
+#| message: false
+#| warning: false
+head(who_tb_data)
+```
+
+## Explore the data
+Explore the data to see relationships and what questions can we possibly answer?
+```{r}
+#| message: false
+#| warning: false
+# What years are available in the dataset?
+# unique() gives all the diff values
+# sort() puts them in order
+years_available<- unique(who_tb_data$year) %>% sort()
+print(years_available)
+
+```
+ 23 years worth of data 
+ 
+```{r}
+#| message: false
+#| warning: false
+most_recent_year<-max(who_tb_data$year, na.rm = TRUE) # find the most recent year 
+print(paste("Most recent year:", most_recent_year))
+```
+ 
+```{r}
+#| message: false
+#| warning: false
+# find a comparison year
+comparison_year<- most_recent_year - 10 # lets compare to a decade ago 
+print(paste("Comparison year:", comparison_year))
+```
+
+# Data Wrangling - New Skill
+
+Using across() to apply functions to multiple columns ( I think this was mentioned in the lecture when we learned summarise & mutate but not really used)
+Using window functions with lag() to get the value from the previous row (after sorting). Its good for calculating changes over time. 
+
+I will: 
+1. Group by country (each country gets its own group)
+2. Arrange by year (put years in order)
+3. Use lag() to get the previous year's value
+4. Calculate the change
+
+```{r}
+#| message: false
+#| warning: false
+# Get data for both years
+tb_two_years<- who_tb_data %>%
+  filter(year %in% c(comparison_year, most_recent_year)) %>% # filter using %in% checks if year is in a vector- %in% = is contained in 
+  select(country, # pick the columns i want to keep - country name
+         iso3, # 3-letter code for country/territory
+         year, # year of observation
+         e_mort_exc_tbhiv_100k, # HIV-negative TB mortality
+         e_mort_tbhiv_100k, # # HIV-positive TB mortality
+         e_inc_100k, # TB incidence cases per 100,000 population
+         e_pop_num) # population 
+```
+
+```{r}
+#| message: false
+#| warning: false
+# check we have both years 
+tb_two_years%>%count(year)
+```
+
+We have a total of 215 entries per year = 430 total entries 
+
+```{r}
+#| message: false
+#| warning: false
+tb_changes<- tb_two_years %>%
+  group_by(country, iso3) %>% # goup by country and country/territory code
+  arrange(year) %>% # sort by year within each country 
+  mutate(prev_hiv_neg_mort = lag(e_mort_exc_tbhiv_100k), # get value from previous row 
+         prev_hiv_pos_mort = lag(e_mort_tbhiv_100k),
+         prev_incidence = lag(e_inc_100k),
+         
+         change_hiv_neg = e_mort_exc_tbhiv_100k - prev_hiv_neg_mort, # calculate change (current - previous)
+         change_hiv_pos = e_mort_tbhiv_100k - prev_hiv_pos_mort,
+         change_incidence = e_inc_100k - prev_incidence,
+         
+         pct_change_hiv_neg = (change_hiv_neg / prev_hiv_neg_mort) * 100, # calculate % change 
+         pct_change_hiv_pos = (change_hiv_pos / prev_hiv_pos_mort) * 100,
+         pct_change_incidence = (change_incidence / prev_incidence) * 100) %>%
+  ungroup() %>%
+  filter(year == most_recent_year)
+```
+
+Lets look at statistics for multiple mortlity variables at once using across()
+
+```{r}
+#| message: false
+#| warning: false
+summary_stats<- tb_changes %>%
+  summarise(across(.cols = starts_with("e_mort"), # select all columns that start with e_mort
+                   list( # calculate summary statistics of all countries 
+                   mean = ~mean(.x, na.rm = TRUE),
+                   median = ~median(.x, na.rm = TRUE),
+                   min = ~min(.x, na.rm = TRUE),
+                   max = ~max(.x, na.rm = TRUE)),
+            .names = "{.col}_{.fn}")) # keeps original column names 
+```
+
+Now lets categorize these statistics to see trends 
+```{r}
+tb_categorized <- tb_changes %>% # create trend categories for HIV neg and pos mort 
+  mutate(trend_hiv_neg = case_when(is.na(pct_change_hiv_neg) ~ "No Data", # if no data 
+                                   pct_change_hiv_neg < -10 ~ "Improving", 
+                                   abs(pct_change_hiv_neg) <= 10 ~ "Stable",
+                                   pct_change_hiv_neg > 10 ~ "Worsening",
+                                   TRUE ~ "Other"),
+         trend_hiv_pos = case_when(is.na(pct_change_hiv_pos) ~ "No data", 
+                                   pct_change_hiv_pos < -10 ~ "Improving",
+                                   abs(pct_change_hiv_pos) <= 10 ~ "Stable", # anything between -10 and 10 
+                                   pct_change_hiv_pos > 10 ~ "Worsening", # increased by 10% 
+                                   TRUE ~ "Other"), # TRUE is the else 
+         # Create a severity category combining both 
+         severity_cat = case_when((e_mort_exc_tbhiv_100k > 50 | e_mort_tbhiv_100k > 20) &
+           (pct_change_hiv_neg > 0 | pct_change_hiv_pos > 0) ~ "High Burden & Worsening", # high mortality rates 
+           (e_mort_exc_tbhiv_100k > 50 | e_mort_tbhiv_100k > 20) & 
+           (pct_change_hiv_neg < -10 | pct_change_hiv_pos < -10) ~ "High burden but improving",
+            e_mort_exc_tbhiv_100k > 10 | e_mort_tbhiv_100k > 5 ~ "Moderate burden", # middle range of mortality
+            e_mort_exc_tbhiv_100k <= 10 & e_mort_tbhiv_100k <= 5 ~ "Low burden", # low mortality rates
+            TRUE ~ "Insufficient data")) # everything else 
+ 
+```
+
+Now lets see how many countries are in each of the categories
+```{r}
+#| message: false
+#| warning: false
+tb_categorized %>%
+  count(severity_cat) %>% # count the #
+  arrange(desc(n)) # arrange in highest to lowest 
+
+tb_categorized %>% # for HIV neg
+  count(trend_hiv_neg) %>%
+  arrange(desc(n))
+
+tb_categorized %>% # for HIV pos 
+  count(trend_hiv_pos) %>%
+  arrange(desc(n))
+```
+ # Get World Map Data 
+```{r}
+#| message: false
+#| warning: false
+# get world map data from rnaturalearth
+world<- ne_countries(scale = "medium", returnclass = "sf") # download country boundary data as simple features objectt
+
+world_tb<- world %>% # join cat data with world map 
+  left_join(tb_categorized, by = c("iso_a3" = "iso3")) # use left join to combine datasets 
+```
+
+# Create Interactive Maps
+```{r}
+#| message: false
+#| warning: false
+# Maap 1: HIV pos
+map_hiv_pos <- ggplot(data = world_tb) +
+  geom_sf(aes(fill = e_mort_tbhiv_100k, # plot map shapes 
+              text = paste("Country:", name, # this creates hover text 
+                           "\nHIV+ TB Mortality:", round(e_mort_tbhiv_100k, 1), "per 100,00",
+                           "\n10-year Change:", round(pct_change_hiv_pos, 1), "%",
+                           "\nTrend:", trend_hiv_pos)),
+          color = "white", size = 0.1) +
+  scale_fill_viridis_c(option = "magma", # color scheme 
+                       na.value = "grey90", # grey out NAs 
+                       trans = "sqrt",
+                       name = "HIV+ TB Mortality\nper 100,00")+
+  labs(title = paste("HIV Positive TB Mortality Rates", most_recent_year), # add labels 
+       subtitle = paste("With 10-year trends (vs", comparison_year, ")"),
+       caption = "Data: World Health Organization via Tidy Tuessday ") +
+  theme_minimal() + # create theme 
+  theme( # I want a clean minimal theme and background 
+    plot.title = element_text(size = 14, face = "bold"), # edit titles 
+    plot.subtitle = element_text(size = 11),
+    axis.text = element_blank(), # remove axis labels 
+    axis.ticks = element_blank(), # remove axis tiks 
+    panel.grid = element_blank()) # remove grid lines 
+
+  
+```
+
+ Make it interactive
+```{r}
+#| message: false
+#| warning: false
+interactive_map_hiv_pos <- ggplotly(map_hiv_pos, tooltip = "text")
+interactive_map_hiv_pos
+```
+
+```{r}
+#| message: false
+#| warning: false
+# Map 2: HIV neg
+map_hiv_neg <- ggplot(data = world_tb) +
+  geom_sf(aes(fill = e_mort_exc_tbhiv_100k,
+              text = paste("Country:", name,
+                           "\nHIV- TB Mortality:", round(e_mort_exc_tbhiv_100k, 1), "per 100,000",
+                           "\n10-Year Change:", round(pct_change_hiv_neg, 1), "%",
+                           "\nTrend:", trend_hiv_neg)),
+          color = "white", size = 0.1) +
+  scale_fill_viridis_c(option = "viridis",
+                       na.value = "grey90",
+                       trans = "sqrt", # makes it so the difference in colors/values are easily visible 
+                       name = "HIV- TB Mortality\nper 100,000") +
+  
+  labs(title = paste("HIV-Negative TB Mortality Rates", most_recent_year), # add labels 
+    subtitle = paste("With 10-year trends (vs", comparison_year, ")"),
+    caption = "Data: World Health Organization via TidyTuesday") +
+  theme_minimal() + # create theme 
+  theme(plot.title = element_text(size = 14, face = "bold"), # edit titles 
+        plot.subtitle = element_text(size = 11),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank())
+```
+
+```{r}
+#| message: false
+#| warning: false
+interactive_map_hiv_neg <- ggplotly(map_hiv_neg, tooltip = "text")
+interactive_map_hiv_neg
+```
+
+```{r}
+#| message: false
+#| warning: false
+severity_colors <- c("High Burden & Worsening" = "#d73027",      # Red
+                     "High burden but improving" = "#fee08b",    # Yellow
+                     "Moderate burden" = "#a6d96a",              # Light green
+                     "Low burden" = "#1a9850",                   # Dark green
+                     "Insufficient data" = "grey8"              # dark grey
+)
+
+map_severity <- ggplot(data = world_tb) +
+  geom_sf(aes(fill = severity_cat,
+              text = paste("Country:", name,
+      "\nCategory:", severity_cat,
+      "\nHIV- Mortality:", round(e_mort_exc_tbhiv_100k, 1),
+      "\nHIV+ Mortality:", round(e_mort_tbhiv_100k, 1),
+      "\nHIV- Change:", round(pct_change_hiv_neg, 1), "%",
+      "\nHIV+ Change:", round(pct_change_hiv_pos, 1), "%")),
+      color = "white", size = 0.1) +
+  
+  
+  scale_fill_manual(values = severity_colors, # scale_fill_manual to assign specific colors to categories
+                    na.value = "grey90",
+                    name = "TB Burden Category") +
+  
+  labs(title = paste("TB Burden & Trend Categories", most_recent_year), #
+       subtitle = "Combining current burden with 10-year trends",
+       caption = "Data: World Health Organization via TidyTuesday") +
+  
+  theme_minimal() +
+  theme(plot.title = element_text(size = 14, face = "bold"),
+        plot.subtitle = element_text(size = 11),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        panel.grid = element_blank(),
+        legend.position = "bottom")
+
+# make it interactive 
+interactive_map_severity <- ggplotly(map_severity, tooltip = "text")
+interactive_map_severity
+```
+# Save 
+ 
+```{r}
+#| message: false
+#| warning: false
+# save as html
+saveWidget(interactive_map_hiv_pos,
+           file = here("Tidy_Tuesday","Week_02","output","tb_hiv_pos.html"))
+
+saveWidget(interactive_map_hiv_neg,
+           file = here("Tidy_Tuesday","Week_02","output","tb_hiv_neg.html"))
+
+saveWidget(interactive_map_severity,
+           file = here("Tidy_Tuesday","Week_02","output","tb_severity_cat.html"))
+```
+
+```{r}
+#| message: false
+#| warning: false
+# save static 
+ggsave(here("Tidy_Tuesday", "Week_02", "output", "tb_hiv_pos.png"),
+       plot = map_hiv_pos,
+       width = 12, height = 7, dpi = 300)
+
+ggsave(here("Tidy_Tuesday", "Week_02","output", "tb_hiv_neg.png"),
+       plot = map_hiv_neg,
+       width = 12, height = 7, dpi = 300)
+
+ggsave(here("Tidy_Tuesday", "Week_02","output", "tb_severity_cat.png"),
+       plot = map_severity,
+       width = 12, height = 7, dpi = 300)
+```
+
+I *may* have gone down a few rabbit holes and spent way too much time on this..
+So, I realize there are a few things not pretty about it but Im just too done to deal with it lol 
