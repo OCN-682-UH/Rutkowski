@@ -1,0 +1,99 @@
+---
+title: "Sherlock Holmes Text Analysis"
+author: "Emily C Rutkowski"
+format: 
+  html:
+    theme: sketchy
+    toc: true
+    code-fold: true
+---
+
+# Introductions
+
+This week's Tidy Tuesday explores the complete text of the Sherlock Holmes stories and novels, made available through the {sherlock} R package by Emil Hvitfeldt. 
+
+*This week I learned how to use the `ggwordcloud` package.* 
+This package creates word clouds that integrate with ggplot2. I'm also trying to learn more named colors in R. 
+
+I want to create a word cloud which is a picture where the most common words appear bigger and less common words appear smaller.
+The words will also go from dark to light based on frequency. 
+This lets me quickly see what words are used most often in the Sherlock Holmes stories.
+```{r}
+#| message: false
+#| warning: false
+library(tidyverse)
+library(here)
+library(tidytext)
+library(tidytuesdayR)
+library(ggwordcloud) # for creating word clouds with ggplot2
+```
+
+# Load Data
+```{r}
+#| message: false
+# Load sherlock Holmes data from TidyTuesday 
+tuesdata<- tidytuesdayR::tt_load('2025-11-18')
+#view the data
+
+```
+
+## Extract the holmes dataset
+```{r}
+# This contains all the text organized by book and line 
+holmes<- tuesdata$holmes  
+```
+
+# Data Quarreling 
+```{r}
+#| message: false
+# Clean and prep the text 
+# tokenize the text- break the text into individual words
+holmes_words<- holmes %>% # separate into 1 word per row 
+  unnest_tokens(output = word, # name of new column w/ words
+                input = text) %>% # column containing original text 
+  filter(!is.na(word))
+# now we have 579,790 entries- yikes 
+```
+
+```{r}
+#| message: false
+#| output: false 
+# Remove tidytext built in stopwords - the, and, is....
+head(stop_words)
+holmes_clean<- holmes_words %>%
+  anti_join(stop_words, by = "word") # anti-join to keep only the rows in holmes_word that dont match stop_words
+cat("words before removing stop words:", nrow(holmes_words), "\n") # count how many words we have before/after cleaning 
+cat("words after removing stop words:", nrow(holmes_clean), "\n")
+```
+
+```{r}
+word_counts<- holmes_clean %>% # count how often each word appears and sort from + to - common 
+  count(word, sort = TRUE)
+head(word_counts, 20)
+```
+
+# Word Cloud
+```{r}
+#| label: fig-wordcloud
+#| fig-cap: "Word cloud of the most common words in Sherlock Holmes stories"
+#| fig-width: 10
+#| fig-height: 8
+
+top_words<- word_counts %>% # filter to top 100 common words 
+  slice_head(n = 100) # take the first 100 rows 
+
+ggplot(top_words, aes(label = word, # create word cloud using ggwordcloud 
+                      size = n, 
+                      color = n))+
+  geom_text_wordcloud_area(shape = "circle")+ # sizes words by frequency 
+  scale_size_area(max_size = 20)+ # controls the range of word sizes 
+  scale_color_gradient(low = "darkgoldenrod1", high = "darkred")+ # color gradient from light to dark based on word freq 
+  labs(title = "Most Common Words in Sherlock Holmes Stories", # add title 
+       subtitle = "Excluding common stop words",
+       caption = "From the Tidy Tuesday Sherlock Holmes Dataset") +
+  theme_minimal()+ # add theme
+  theme(plot.title = element_text(size = 18, face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(size = 12, hjust = 0.5),
+        plot.caption = element_text(size = 9, hjust = 1))
+```
+
